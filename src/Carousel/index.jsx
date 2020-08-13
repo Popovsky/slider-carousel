@@ -53,11 +53,13 @@ class Carousel extends Component {
             this.setState({
                 isFullscreen: false,
             });
+            document.body.style.overflow = 'initial';
         } else {
             document.documentElement.requestFullscreen();
             this.setState({
                 isFullscreen: true,
             });
+            document.body.style.overflow = 'hidden';
         }
     }
 
