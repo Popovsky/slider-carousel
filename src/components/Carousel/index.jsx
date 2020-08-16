@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import PropTypes from 'prop-types';
 import Slide from './Slide';
 import styles from './Carousel.module.scss';
 import classNames from 'classnames';
@@ -41,32 +42,22 @@ class Carousel extends Component {
         })
     }
 
-    delayHandler = (event) => {
+    delayHandler = ({target: {value}}) => {
         this.setState({
-            delay: event.target.value,
+            delay: value,
         })
     }
 
     fullscreenMode = () => {
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
-            this.setState({
-                isFullscreen: false,
-            });
+        const {isFullscreen} = this.state;
+        this.setState({
+            isFullscreen: !isFullscreen,
+        });
+        if (!isFullscreen) {
+            document.body.style.overflow = 'hidden';
         } else {
-            document.documentElement.requestFullscreen();
-            this.setState({
-                isFullscreen: true,
-            });
+            document.body.style.overflow = 'initial';
         }
-    }
-
-    static getNextIndex(index, slides) {
-        return (index + 1) % slides.length;
-    }
-
-    static getPrevIndex(index, slides) {
-        return (index - 1 + slides.length) % slides.length;
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
@@ -79,7 +70,7 @@ class Carousel extends Component {
     }
 
     render() {
-        const {slides, download = true} = this.props;
+        const {slides, download} = this.props;
         const {currentIndex, isPlaying, delay, isFullscreen} = this.state;
         const containerClass = classNames(styles.container, {
             [styles.fullscreen]: isFullscreen,
@@ -94,7 +85,7 @@ class Carousel extends Component {
                 <div className={styles.slideControl}>
                     <div className={styles.delay}>
                         <input type='range' value={delay} min={1} max={10000} onChange={this.delayHandler}/>
-                        <span>{delay}</span>
+                        <div>{delay}</div>
                     </div>
                     <div className={styles.nextPrev}>
                         <Icon onClick={this.prevIndex} path={mdiSkipPrevious}/>
@@ -108,6 +99,24 @@ class Carousel extends Component {
             </article>
         );
     }
+}
+
+Carousel.propTypes = {
+    slides: PropTypes.arrayOf(PropTypes.shape({
+        title: PropTypes.string,
+        description: PropTypes.string,
+        src: PropTypes.string,
+    })),
+    download: PropTypes.bool,
+}
+
+Carousel.defaultProps = {
+    slides: [{
+        title: 'title',
+        description: 'description',
+        src: '',
+    }],
+    download: true,
 }
 
 export default Carousel;

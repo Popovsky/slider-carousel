@@ -29,10 +29,12 @@
     width: 100%;
     text-align: center;
   }
+
   & > h3 {
     text-transform: uppercase;
     font-weight: bold;
   }
+
   & > p {
     --one-line: 1.5rem;
     --line-count: 4;
