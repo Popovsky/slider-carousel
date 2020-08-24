@@ -1,8 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import styles from './Slide.module.scss';
-import classNames from 'classnames';
-import defaultImage from './Black.jpg';
 
 class Slide extends Component {
     constructor(props) {
@@ -25,6 +23,7 @@ class Slide extends Component {
             isLoaded: true,
         });
     };
+
     handleError = () => {
         this.setState({
             error: true,
@@ -33,64 +32,50 @@ class Slide extends Component {
 
     load = () => {
         const {img} = this.state;
-        const {src} = this.props;
+        const {currentSlide: {src}} = this.props;
         img.src = src;
     };
 
     componentDidMount() {
-        const {download} = this.props;
-        if (download) {
-            this.load();
-        }
+        this.load();
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        const {download, src} = this.props;
+    componentDidUpdate(prevProps, prevState, snapshot) {
         const {isLoaded, error} = this.state;
-        if (download && !isLoaded && !error) {
+        const {currentSlide: {src}} = this.props;
+        if (src !== prevProps.currentSlide.src && isLoaded && !error) {
             this.load();
-        }
-
-        if (src !== prevProps.src) {
-            this.setState({
-                isLoaded: false,
-                error: null,
-            });
         }
     }
 
     render() {
-        const {isLoaded} = this.state;
-        const {isCurrent, src, title, description} = this.props;
-        const className = classNames(styles.slide, {
-            [styles.currentSlide]: isCurrent,
-        });
+        const {img, error, isLoaded} = this.state;
+        const {currentSlide, containerAspectRatio} = this.props;
+        const imageAspectRatio = img.width / img.height;
+        const imageSize = {
+            [imageAspectRatio > containerAspectRatio ? 'width' : 'height']: 'inherit',
+        };
         return (
-            <figure className={className} title={title}>
-                <img className={styles.slideImage} src={isLoaded ? src : defaultImage} alt={title}/>
-                <figcaption className={styles.caption}>
-                    <h3>{title}</h3>
-                    <p>{description}</p>
-                </figcaption>
-            </figure>
+            <>
+                {!error && isLoaded && <figure className={styles.container} title={currentSlide.title}>
+                    <img src={currentSlide.src} alt={currentSlide.title} style={imageSize}/>
+                    <figcaption className={styles.caption}>
+                        <h3>{currentSlide.title}</h3>
+                        <p>{currentSlide.description}</p>
+                    </figcaption>
+                </figure>}
+            </>
         );
     }
 }
 
 Slide.propTypes = {
-    title: PropTypes.string,
-    description: PropTypes.string,
-    src: PropTypes.string,
-    isCurrent: PropTypes.bool,
-    isFullscreen: PropTypes.bool,
-};
-
-Slide.defaultProps = {
-    title: 'title',
-    description: 'description',
-    src: defaultImage,
-    isCurrent: true,
-    isFullscreen: false,
-};
+    containerAspectRatio: PropTypes.number.isRequired,
+    currentSlide: PropTypes.shape({
+        src: PropTypes.string,
+        title: PropTypes.string,
+        description: PropTypes.string,
+    }).isRequired,
+}
 
 export default Slide;

@@ -1,22 +1,18 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import Slide from './Slide';
+import Control from './Control';
 import styles from './Carousel.module.scss';
-import classNames from 'classnames';
-import Icon from '@mdi/react'
-import {mdiSkipPrevious, mdiSkipNext, mdiFullscreen, mdiFullscreenExit, mdiPlay, mdiPause} from '@mdi/js';
 
 class Carousel extends Component {
     constructor(props) {
         super(props);
-
+        const {width, height} = this.props;
         this.state = {
-            delay: 1000,
-            isPlaying: false,
-            isFullscreen: false,
             currentIndex: 0,
-        };
-        this.timeoutId = null;
+            width: width,
+            height: height,
+        }
     }
 
     nextIndex = () => {
@@ -35,67 +31,40 @@ class Carousel extends Component {
         });
     }
 
-    slideshowHandler = () => {
-        const {isPlaying} = this.state;
+    resize = () => {
         this.setState({
-            isPlaying: !isPlaying,
-        })
-    }
-
-    delayHandler = ({target: {value}}) => {
-        this.setState({
-            delay: value,
-        })
-    }
-
-    fullscreenMode = () => {
-        const {isFullscreen} = this.state;
-        this.setState({
-            isFullscreen: !isFullscreen,
+            width: window.innerWidth,
+            height: window.innerHeight,
         });
-        if (!isFullscreen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'initial';
-        }
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        const {isPlaying, delay} = this.state;
-        clearTimeout(this.timeoutId);
-        this.timeoutId = null;
-        if (isPlaying) {
-            this.timeoutId = setTimeout(this.nextIndex, delay);
+    fullscreenMode = (isFullscreen) => {
+        const {width, height} = this.props;
+        if (isFullscreen) {
+            this.setState({
+                width: width,
+                height: height,
+            });
+            window.removeEventListener('resize', this.resize);
+        } else {
+            this.resize();
+            window.addEventListener('resize', this.resize);
         }
+        document.body.style.overflow = isFullscreen ? 'initial' : 'hidden';
     }
 
     render() {
-        const {slides, download} = this.props;
-        const {currentIndex, isPlaying, delay, isFullscreen} = this.state;
-        const containerClass = classNames(styles.container, {
-            [styles.fullscreen]: isFullscreen,
-        });
+        const {currentIndex, width, height} = this.state;
+        const {slides} = this.props;
+        const containerAspectRatio = width / height;
+        const containerSize = {
+            width,
+            height,
+        };
         return (
-            <article className={containerClass}>
-                {download && (
-                    <>
-                        <Slide download {...slides[currentIndex]} isCurrent isFullscreen={isFullscreen}/>
-                    </>
-                )}
-                <div className={styles.slideControl}>
-                    <div className={styles.delay}>
-                        <input type='range' value={delay} min={1} max={10000} onChange={this.delayHandler}/>
-                        <div>{delay}</div>
-                    </div>
-                    <div className={styles.nextPrev}>
-                        <Icon onClick={this.prevIndex} path={mdiSkipPrevious}/>
-                        <Icon onClick={this.nextIndex} path={mdiSkipNext}/>
-                    </div>
-                    <div className={styles.slideshow}>
-                        <Icon onClick={this.slideshowHandler} path={isPlaying ? mdiPause : mdiPlay}/>
-                        <Icon onClick={this.fullscreenMode} path={isFullscreen ? mdiFullscreenExit : mdiFullscreen}/>
-                    </div>
-                </div>
+            <article className={styles.container} style={containerSize}>
+                <Slide containerAspectRatio={containerAspectRatio} currentSlide={slides[currentIndex]}/>
+                <Control next={this.nextIndex} prev={this.prevIndex} fullscreenMode={this.fullscreenMode} width={width} height={height}/>
             </article>
         );
     }
@@ -107,7 +76,8 @@ Carousel.propTypes = {
         description: PropTypes.string,
         src: PropTypes.string,
     })),
-    download: PropTypes.bool,
+    width: PropTypes.number,
+    height: PropTypes.number,
 }
 
 Carousel.defaultProps = {
@@ -116,7 +86,8 @@ Carousel.defaultProps = {
         description: 'description',
         src: '',
     }],
-    download: true,
+    width: 900,
+    height: 600,
 }
 
 export default Carousel;
